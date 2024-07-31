@@ -1,113 +1,112 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from 'react';
+import { Container, Grid, Typography, Paper, Box } from '@mui/material';
+import Gauge from '../components/Gauge';
+import ControlSwitch from '../components/Switch';
+import { connectMQTT, getClient } from '../lib/mqtt';
+import { MqttClient } from 'mqtt';
 
 export default function Home() {
+  const [moisture, setMoisture] = useState(0);
+  const [temperature, setTemperature] = useState(0);
+  const [humidity, setHumidity] = useState(0);
+  const [pumpOn, setPumpOn] = useState(false);
+  const [fanOn, setFanOn] = useState(false);
+
+  useEffect(() => {
+    const client: MqttClient = connectMQTT();
+
+    client.on('message', (topic: string, message: Buffer) => {
+      const value = parseFloat(message.toString());
+      switch (topic) {
+        case 'garden/sensors/moisture':
+          setMoisture(value);
+          break;
+        case 'garden/sensors/temperature':
+          setTemperature(value);
+          break;
+        case 'garden/sensors/humidity':
+          setHumidity(value);
+          break;
+      }
+    });
+
+    return () => {
+      client.end();
+    };
+  }, []);
+
+  const handlePumpSwitch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newState = event.target.checked;
+    setPumpOn(newState);
+    const client = getClient();
+    if (client) {
+      client.publish('garden/controls/pump', newState ? '1' : '0');
+    }
+  };
+
+  const handleFanSwitch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newState = event.target.checked;
+    setFanOn(newState);
+    const client = getClient();
+    if (client) {
+      client.publish('garden/controls/fan', newState ? '1' : '0');
+    }
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+    <Container maxWidth="md">
+      <Box sx={{ my: 4 }}>
+        <Typography variant="h2" component="h1" gutterBottom>
+          IoT Garden Monitor
+        </Typography>
+        <Paper elevation={3} sx={{ p: 3 }}>
+          <Grid container spacing={3} justifyContent="center">
+            <Grid item xs={12} sm={4}>
+              <Box display="flex" justifyContent="center" alignItems="center">
+                <Gauge id="moisture" value={moisture} label="Plot 1 - Moisture" />
+              </Box>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Box display="flex" justifyContent="center" alignItems="center">
+                <Gauge id="moisture" value={moisture} label="Plot 2 - Moisture" />
+              </Box>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Box display="flex" justifyContent="center" alignItems="center">
+                <Gauge id="moisture" value={moisture} label="Plot 3 - Moisture" />
+              </Box>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Box display="flex" justifyContent="center" alignItems="center">
+                <Gauge id="moisture" value={moisture} label="Plot 4 - Moisture" />
+              </Box>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Box display="flex" justifyContent="center" alignItems="center">
+                <Gauge id="temperature" value={temperature} label="Temperature" min={-20} max={50} />
+              </Box>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Box display="flex" justifyContent="center" alignItems="center">
+                <Gauge id="humidity" value={humidity} label="Humidity" />
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+        <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <ControlSwitch label="Pump" checked={pumpOn} onChange={handlePumpSwitch} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <ControlSwitch label="Fan" checked={fanOn} onChange={handleFanSwitch} />
+            </Grid>
+          </Grid>
+        </Paper>
 
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+      </Box>
+    </Container>
   );
 }
