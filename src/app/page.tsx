@@ -1,21 +1,31 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Container, Grid, Typography, Paper, Box } from '@mui/material';
+import { Container, Grid, Typography, Paper, Box, Tooltip } from '@mui/material';
+import { CloudDone, CloudOff } from '@mui/icons-material';
 import Gauge from '../components/Gauge';
 import ControlSwitch from '../components/Switch';
 import { connectMQTT, getClient } from '../lib/mqtt';
 import { MqttClient } from 'mqtt';
 
 export default function Home() {
-  const [moisture, setMoisture] = useState(0);
-  const [temperature, setTemperature] = useState(0);
-  const [humidity, setHumidity] = useState(0);
-  const [pumpOn, setPumpOn] = useState(false);
-  const [fanOn, setFanOn] = useState(false);
+  const [moisture, setMoisture] = useState<number>(0);
+  const [temperature, setTemperature] = useState<number>(0);
+  const [humidity, setHumidity] = useState<number>(0);
+  const [pumpOn, setPumpOn] = useState<boolean>(false);
+  const [fanOn, setFanOn] = useState<boolean>(false);
+  const [mqttConnected, setMqttConnected] = useState<boolean>(false);
 
   useEffect(() => {
     const client: MqttClient = connectMQTT();
+
+    client.on('connect', () => {
+      setMqttConnected(true);
+    });
+
+    client.on('offline', () => {
+      setMqttConnected(false);
+    });
 
     client.on('message', (topic: string, message: Buffer) => {
       const value = parseFloat(message.toString());
@@ -57,30 +67,46 @@ export default function Home() {
 
   return (
     <Container maxWidth="md">
-      <Box sx={{ my: 4 }}>
+      <Box sx={{ my: 5, px: 2 }}>
         <Typography variant="h2" component="h1" gutterBottom>
           IoT Greenhouse Monitor
         </Typography>
+
+        <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
+          <Typography variant="h6" component="h2" gutterBottom>
+            MQTT Connection Status : 
+            <Tooltip title={mqttConnected ? "MQTT Connected" : "MQTT Disconnected"}>
+              <Box component="span" sx={{ ml: 2, verticalAlign: 'middle', display: 'inline-flex' }}>
+                {mqttConnected ? (
+                  <CloudDone color="success" />
+                ) : (
+                  <CloudOff color="error" />
+                )}
+              </Box>
+            </Tooltip>
+          </Typography>
+        </Paper>
+          
         <Paper elevation={3} sx={{ p: 3 }}>
-          <Grid container spacing={3} justifyContent="center">
+          <Grid container spacing={4} justifyContent="center">
             <Grid item xs={12} sm={4}>
               <Box display="flex" justifyContent="center" alignItems="center">
-                <Gauge id="moisture" value={moisture} label="Plot 1 - Moisture" />
+                <Gauge id="moisture1" value={moisture} label="Plot 1 - Moisture" />
               </Box>
             </Grid>
             <Grid item xs={12} sm={4}>
               <Box display="flex" justifyContent="center" alignItems="center">
-                <Gauge id="moisture" value={moisture} label="Plot 2 - Moisture" />
+                <Gauge id="moisture2" value={moisture} label="Plot 2 - Moisture" />
               </Box>
             </Grid>
             <Grid item xs={12} sm={4}>
               <Box display="flex" justifyContent="center" alignItems="center">
-                <Gauge id="moisture" value={moisture} label="Plot 3 - Moisture" />
+                <Gauge id="moisture3" value={moisture} label="Plot 3 - Moisture" />
               </Box>
             </Grid>
             <Grid item xs={12} sm={4}>
               <Box display="flex" justifyContent="center" alignItems="center">
-                <Gauge id="moisture" value={moisture} label="Plot 4 - Moisture" />
+                <Gauge id="moisture4" value={moisture} label="Plot 4 - Moisture" />
               </Box>
             </Grid>
             <Grid item xs={12} sm={4}>
@@ -95,6 +121,7 @@ export default function Home() {
             </Grid>
           </Grid>
         </Paper>
+
         <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
           <Grid container spacing={3}>
             <Grid item xs={12} sm={6}>
@@ -105,7 +132,6 @@ export default function Home() {
             </Grid>
           </Grid>
         </Paper>
-
       </Box>
     </Container>
   );
