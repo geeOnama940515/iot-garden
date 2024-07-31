@@ -20,13 +20,13 @@ export default function Home() {
     client.on('message', (topic: string, message: Buffer) => {
       const value = parseFloat(message.toString());
       switch (topic) {
-        case 'garden/sensors/moisture':
+        case 'greenhouse/sensors/moisture':
           setMoisture(value);
           break;
-        case 'garden/sensors/temperature':
+        case 'greenhouse/sensors/temperature':
           setTemperature(value);
           break;
-        case 'garden/sensors/humidity':
+        case 'greenhouse/sensors/humidity':
           setHumidity(value);
           break;
       }
@@ -42,7 +42,7 @@ export default function Home() {
     setPumpOn(newState);
     const client = getClient();
     if (client) {
-      client.publish('garden/controls/pump', newState ? '1' : '0');
+      client.publish('greenhouse/controls/pump', newState ? '1' : '0');
     }
   };
 
@@ -51,7 +51,7 @@ export default function Home() {
     setFanOn(newState);
     const client = getClient();
     if (client) {
-      client.publish('garden/controls/fan', newState ? '1' : '0');
+      client.publish('greenhouse/controls/fan', newState ? '1' : '0');
     }
   };
 
@@ -59,7 +59,7 @@ export default function Home() {
     <Container maxWidth="md">
       <Box sx={{ my: 4 }}>
         <Typography variant="h2" component="h1" gutterBottom>
-          IoT Garden Monitor
+          IoT Greenhouse Monitor
         </Typography>
         <Paper elevation={3} sx={{ p: 3 }}>
           <Grid container spacing={3} justifyContent="center">

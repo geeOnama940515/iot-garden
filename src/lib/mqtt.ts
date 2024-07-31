@@ -27,11 +27,11 @@ export function connectMQTT(): mqtt.MqttClient {
 
     client.on('connect', () => {
       console.log('Connected to MQTT broker');
-      client!.subscribe('garden/#', (err) => {
+      client!.subscribe('greenhouse/#', (err) => {
         if (err) {
           console.error('Subscription error:', err.message);
         } else {
-          console.log('Subscribed to garden/#');
+          console.log('Subscribed to greenhouse/#');
         }
       });
     });
