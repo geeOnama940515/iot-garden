@@ -69,7 +69,7 @@ export default function Home() {
     <Container maxWidth="md">
       <Box sx={{ my: 5, px: 2 }}>
         <Typography variant="h2" component="h1" gutterBottom>
-          IoT Greenhouse Monitor
+          Greenhouse|Monitor
         </Typography>
 
         <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
