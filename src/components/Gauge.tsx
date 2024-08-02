@@ -29,7 +29,7 @@ const Gauge: React.FC<GaugeProps> = ({ id, value, label, min = 0, max = 100 }) =
           }}
         >
           <Typography variant="caption" component="div" color="text.secondary">
-            {`${Math.round(value)}${label.includes('Temperature') ? '°C' : '%'}`}
+            {`${(value)}${label.includes('Temperature') ? '°C' : '%'}`}
           </Typography>
         </Box>
       </Box>

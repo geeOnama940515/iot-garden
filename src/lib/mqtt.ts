@@ -8,7 +8,7 @@ const username = process.env.MQTT_USERNAME || 'roger';
 const password = process.env.MQTT_PASSWORD || 'password';
 const port = Number(process.env.MQTT_PORT) || 1993;
 
-let client: mqtt.MqttClient | null;
+let client: mqtt.MqttClient | null = null;
 
 export function connectMQTT(): mqtt.MqttClient {
   if (!client) {
@@ -27,12 +27,16 @@ export function connectMQTT(): mqtt.MqttClient {
 
     client.on('connect', () => {
       console.log('Connected to MQTT broker');
-      client!.subscribe('greenhouse/#', (err) => {
-        if (err) {
-          console.error('Subscription error:', err.message);
-        } else {
-          console.log('Subscribed to greenhouse/#');
-        }
+      // Subscribe to multiple topics
+      const topics = ['cmnd/greenhouse/#','tele/greenhouse/#' ];
+      topics.forEach(topic => {
+        client!.subscribe(topic, (err) => {
+          if (err) {
+            console.error(`Subscription error for topic ${topic}:`, err.message);
+          } else {
+            console.log(`Subscribed to ${topic}`);
+          }
+        });
       });
     });
 
