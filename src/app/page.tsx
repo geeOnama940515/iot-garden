@@ -10,10 +10,12 @@ import { MqttClient } from 'mqtt';
 
 export default function Home() {
   const [moisture, setMoisture] = useState<number>(0);
-  const [temperature, setTemperature] = useState<string>("0");
+  const [temperature, setTemperature] = useState<number>(0);
   const [humidity, setHumidity] = useState<number>(0);
   const [pumpOn, setPumpOn] = useState<boolean>(false);
   const [fanOn, setFanOn] = useState<boolean>(false);
+  const [autoPumpMode, setAutoPumpMode] = useState<boolean>(false);
+  const [autoFanMode, setAutoFanMode] = useState<boolean>(false);
   const [mqttConnected, setMqttConnected] = useState<boolean>(false);
 
   useEffect(() => {
@@ -21,9 +23,8 @@ export default function Home() {
 
     client.on('connect', () => {
       setMqttConnected(true);
-      client.subscribe('tele/greenhouse/SENSOR');
+      client.subscribe('sensor/greenhouse/#');
       client.subscribe('cmnd/greenhouse/#');
-      client.subscribe('stat/greenhouse/#');
     });
 
     client.on('offline', () => {
@@ -33,33 +34,21 @@ export default function Home() {
     client.on('message', (topic: string, message: Buffer) => {
       const payload = message.toString();
       try {
-        
-
-        if (topic === 'tele/greenhouse/SENSOR') {
-          const data = JSON.parse(payload);
-          if (data.DHT11) {
-            setTemperature(data.DHT11.Temperature);
-            setHumidity(parseFloat(data.DHT11.Humidity.toFixed(2)));
-          }
-        } else if (topic === 'greenhouse/sensors/moisture') {
+        if (topic === 'sensor/greenhouse/moisture') {
           setMoisture(parseFloat(payload));
-
-        } else if (topic === 'cmnd/greenhouse/POWER1') {
+        } else if (topic === 'sensor/greenhouse/temperature') {
+          setTemperature(parseFloat(payload));
+        } else if (topic === 'sensor/greenhouse/humidity') {
+          setHumidity(parseFloat(payload));
+        } else if (topic === 'cmnd/greenhouse/pump') {
           setPumpOn(convertPayloadToBoolean(payload));
-          console.log(payload);
-        }
-        else if (topic === 'stat/greenhouse/POWER1') {
-          setPumpOn(convertPayloadToBoolean(payload));
-        }
-        else if (topic === 'stat/greenhouse/POWER2') {
+        } else if (topic === 'cmnd/greenhouse/fan') {
           setFanOn(convertPayloadToBoolean(payload));
+        } else if (topic === 'cmnd/greenhouse/pump_mode') {
+          setAutoPumpMode(payload === 'ONAUTO');
+        } else if (topic === 'cmnd/greenhouse/fan_mode') {
+          setAutoFanMode(payload === 'ONAUTO');
         }
-
-        else if (topic === 'cmnd/greenhouse/POWER2') {
-          setFanOn(convertPayloadToBoolean(payload));
-          console.log("Payload: ",payload);
-        }
-
       } catch (e) {
         console.error('Failed to parse MQTT message:', e);
       }
@@ -69,20 +58,21 @@ export default function Home() {
       client.end();
     };
   }, []);
+
   const convertPayloadToBoolean = (payload: string): boolean => {
-    if (payload === '1' || payload.toUpperCase() === 'ON') {
-      return true;
-    } else if (payload === '0' || payload.toUpperCase() === 'OFF') {
-      return false;
-    }
-    return false; // Default to false if unrecognized
+    return payload.toLowerCase() === 'on';
   };
+
   const handlePumpSwitch = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newState = event.target.checked;
     setPumpOn(newState);
     const client = getClient();
     if (client) {
-      client.publish('cmnd/greenhouse/POWER1', newState ? 'ON' : 'OFF');
+      if (autoPumpMode) {
+        client.publish('cmnd/greenhouse/pump_mode', newState ? 'ONAUTO' : 'OFFAUTO');
+      } else {
+        client.publish('cmnd/greenhouse/pump', newState ? 'ON' : 'OFF');
+      }
     }
   };
 
@@ -91,7 +81,29 @@ export default function Home() {
     setFanOn(newState);
     const client = getClient();
     if (client) {
-      client.publish('cmnd/greenhouse/POWER2', newState ? 'ON' : 'OFF');
+      if (autoFanMode) {
+        client.publish('cmnd/greenhouse/fan_mode', newState ? 'ONAUTO' : 'OFFAUTO');
+      } else {
+        client.publish('cmnd/greenhouse/fan', newState ? 'ON' : 'OFF');
+      }
+    }
+  };
+
+  const handleAutoPumpMode = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newState = event.target.checked;
+    setAutoPumpMode(newState);
+    const client = getClient();
+    if (client) {
+      client.publish('cmnd/greenhouse/pump_mode', newState ? 'ONAUTO' : 'OFFAUTO');
+    }
+  };
+
+  const handleAutoFanMode = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newState = event.target.checked;
+    setAutoFanMode(newState);
+    const client = getClient();
+    if (client) {
+      client.publish('cmnd/greenhouse/fan_mode', newState ? 'ONAUTO' : 'OFFAUTO');
     }
   };
 
@@ -121,27 +133,12 @@ export default function Home() {
           <Grid container spacing={4} justifyContent="center">
             <Grid item xs={12} sm={4}>
               <Box display="flex" justifyContent="center" alignItems="center">
-                <Gauge id="moisture1" value={parseFloat(moisture.toFixed(2))} label="Plot 1 - Moisture" />
+                <Gauge id="moisture" value={parseFloat(moisture.toFixed(2))} label="Soil Moisture" />
               </Box>
             </Grid>
             <Grid item xs={12} sm={4}>
               <Box display="flex" justifyContent="center" alignItems="center">
-                <Gauge id="moisture2" value={parseFloat(moisture.toFixed(2))} label="Plot 2 - Moisture" />
-              </Box>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Box display="flex" justifyContent="center" alignItems="center">
-                <Gauge id="moisture3" value={parseFloat(moisture.toFixed(2))} label="Plot 3 - Moisture" />
-              </Box>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Box display="flex" justifyContent="center" alignItems="center">
-                <Gauge id="moisture4" value={parseFloat(moisture.toFixed(2))} label="Plot 4 - Moisture" />
-              </Box>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Box display="flex" justifyContent="center" alignItems="center">
-                <Gauge id="temperature" value={Number(temperature)} label="Temperature" min={-20} max={50} />
+                <Gauge id="temperature" value={parseFloat(temperature.toFixed(2))} label="Temperature" min={-20} max={50} />
               </Box>
             </Grid>
             <Grid item xs={12} sm={4}>
@@ -154,11 +151,17 @@ export default function Home() {
 
         <Paper elevation={3} sx={{ p: 3, mt: 3 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={3}>
               <ControlSwitch label="Pump" checked={pumpOn} onChange={handlePumpSwitch} />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={3}>
               <ControlSwitch label="Fan" checked={fanOn} onChange={handleFanSwitch} />
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <ControlSwitch label="Auto Pump Mode" checked={autoPumpMode} onChange={handleAutoPumpMode} />
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <ControlSwitch label="Auto Fan Mode" checked={autoFanMode} onChange={handleAutoFanMode} />
             </Grid>
           </Grid>
         </Paper>
