@@ -25,3 +25,20 @@ MQTT_PASSWORD=password
 MQTT_BROKER_URL=mqtt://xxx.xxx.xxx.xxx
 MQTT_PORT=1993 //1883 for mqtt; 1993//for ws or whatever is config to your mqtt broker
 ```
+
+
+## Arduino IDE Setup
+
+```
+Check this link : https://www.instructables.com/Quick-Start-to-Nodemcu-ESP8266-on-Arduino-IDE/
+Install PubSubClient library
+Install DHT11 library
+```
+
+## Arduino Code
+
+```
+Copy the arduino_code.ino to your preferred arduino IDE
+Change Wifi Settings and MQTT Settings
+
+```
