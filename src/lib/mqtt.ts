@@ -25,7 +25,7 @@ export function connectMQTT(): mqtt.MqttClient {
     client.on('connect', () => {
       console.log('Connected to MQTT broker');
       // Subscribe to multiple topics
-      const topics = ['cmnd/greenhouse/#','tele/greenhouse/#' ];
+      const topics = ['sensor/greenhouse/#','cmnd/greenhouse/#' ];
       topics.forEach(topic => {
         client!.subscribe(topic, (err) => {
           if (err) {
