@@ -19,7 +19,7 @@ export interface Sensor {
   sensorReading: string;
   dateCreated: string;
 }
-
+let tblNUmber = 1;
 export default function Home() {
   const [moisture, setMoisture] = useState<number>(0);
   const [temperature, setTemperature] = useState<number>(0);
@@ -281,7 +281,6 @@ export default function Home() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>ID</TableCell>
                   <TableCell>Sensor Type</TableCell>
                   <TableCell>Reading</TableCell>
                   <TableCell>Date Created</TableCell>
@@ -290,7 +289,6 @@ export default function Home() {
               <TableBody>
                 {sensorData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((sensor) => (
                   <TableRow key={sensor.id}>
-                    <TableCell>{sensor.id}</TableCell>
                     <TableCell>{sensor.sensorType}</TableCell>
                     <TableCell>{sensor.sensorReading}</TableCell>
                     <TableCell>{new Date(sensor.dateCreated).toLocaleString()}</TableCell>
